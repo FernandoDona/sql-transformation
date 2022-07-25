@@ -1,5 +1,5 @@
 import argparse
-from ast import If
+import os
 from io import TextIOWrapper
 from pathlib import Path
 
@@ -7,16 +7,23 @@ argParser = argparse.ArgumentParser(description='Converts a unformatted query re
 
 argParser.add_argument('type', help='Command type to be returned like INSERT or UPDATE.')
 argParser.add_argument('table', help='The target table name.')
-argParser.add_argument('path', help='The path of the file that contains the text to be converted.')
+argParser.add_argument('--path', help='The path of the file that contains the text to be converted. If this parameter is empty then will be read the file in ../in/query-input.txt')
 
 args = argParser.parse_args()
-path = Path(args.path)
+fileDir = os.path.dirname(os.path.realpath(__file__))
+outputPath = os.path.join(fileDir, '../out/sql-command-result.sql')
+inputPath = args.path
+
+if args.path is None or args.path == '':
+    inputPath = os.path.join(fileDir, '../in/query-input.txt')
+
+path = Path(inputPath)
 
 if path.is_file() == False:
-    print(f'The file {args.path} doesnt exist!')
+    print(f'The file {inputPath} doesnt exist!')
     exit()
 
-if args.path.endswith('.csv') == False and args.path.endswith('.txt') == False:
+if inputPath.endswith('.csv') == False and inputPath.endswith('.txt') == False:
     print(f'The file is in a invalid format. Accept only .csv or .txt')
     exit()
 
@@ -53,16 +60,15 @@ def format_line_to_insert(line: str, separator: str, isHeader: bool, tableName: 
 
     return '\t(' + ', '.join(format_field(value) for value in splittedValues) + '), \n'
 
-def format_to_insert(filePath: str, tableName: str) -> str:
+def format_insert_to_file(filePath: str, outputPath: str, tableName: str):
     separator = ';' if filePath.endswith('.csv') else '\t'
     formattedCommand = ''
-    with open(filePath) as f:
-        header = f.readline()
-        formattedCommand += format_line_to_insert(header, separator, True, tableName)
-        for line in f:
-            formattedCommand += format_line_to_insert(line, separator, False, tableName)
-
-    return formattedCommand
+    with open(filePath) as f_in:
+        with open(outputPath, 'w') as f_out:
+            header = f_in.readline()
+            f_out.write(format_line_to_insert(header, separator, True, tableName))
+            for line in f_in:
+                f_out.write(format_line_to_insert(line, separator, False, tableName))
 
 # def format_to_update(filePath: str, tableName: str) -> str:
 #     separator = ';' if filePath.endswith('.csv') else '\t'
@@ -76,7 +82,9 @@ def format_to_insert(filePath: str, tableName: str) -> str:
 
 #     return formattedCommand
 
-if args.type.upper() == 'INSERT':
-    print(format_to_insert(args.path, args.table))
 
-# print(format_to_update(args.path, args.table))
+if args.type.upper() == 'INSERT':
+    format_insert_to_file(inputPath, outputPath, args.table)
+
+# if args.type.upper() == 'UPDATE':
+    # print(format_to_update(args.path, args.table))
