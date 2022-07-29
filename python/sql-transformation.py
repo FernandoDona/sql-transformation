@@ -41,6 +41,9 @@ def format_field(field: str, isColumn: bool = False) -> str:
     if field.upper() == 'NULL':
         return field
     
+    if field == '':
+        return '\'\''
+    
     chars = ':-,;'
     countAlpha = 0
     for char in field:
