@@ -1,4 +1,4 @@
-# Sql-transformation
+# sql-transformation
 Transform the text resulted from a query to a SQL INSERT OR UPDATE.
 Use --help for more information.
 
